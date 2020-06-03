@@ -7,7 +7,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in desserts" :key="item.name">
+        <tr v-for="item in prefectures" :key="item.name">
           <td>{{ item.name }}</td>
         </tr>
       </tbody>
@@ -16,27 +16,15 @@
 </template>
 
 <script>
+import { mapMutations } from 'vuex'
+
 export default {
-  data() {
-    return {
-      message: 'テスト表示',
-      desserts: [
-        {
-          name: 'Tokyo'
-        },
-        {
-          name: 'Osaka'
-        },
-        {
-          name: 'Fukuoka'
-        },
-        {
-          name: 'Okinawa'
-        }
-      ]
-    }
+  computed: {
+    prefectures() {
+      return this.$store.state.prefectures.prefectures; // ファイル名.変数名
+    },
   },
-  async asyncData({ $axios }) {
+  async fetch({ $axios, store }) {
 
     // parseするためのパッケージを読み込み
     var parser = require('fast-xml-parser');
@@ -51,8 +39,24 @@ export default {
     }
 
     // XMLをJSONにする
-    var jsonObj = parser.parse(xml, options);
-    console.log(jsonObj.rss.channel['ldWeather:source'].pref[0]);
+    let jsonObj = parser.parse(xml, options);
+    
+    // 必要な部分だけ取得
+    let data = jsonObj.rss.channel['ldWeather:source'].pref;
+    // console.log(data);
+
+    // 全ての都道府県情報を入れる配列
+    let prefectures = [];
+
+    // 表示するための必要な情報を取得
+    for(var i = 0; i < data.length; i++) {
+      var place = {}; // 各都道府県の情報を入れる連想配列
+      place['name'] = data[i].title;
+      place['city'] = data[i].city;
+      prefectures.push(place); // 配列に追加
+    }
+    // console.log(prefectures);
+    store.commit('prefectures/add', prefectures);
   }
 }
 </script>
